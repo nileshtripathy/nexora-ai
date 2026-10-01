@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; --foreground: 222 20% 12%;
+    --muted: 220 16% 95%; --muted-foreground: 220 9% 42%;
+    --border: 220 14% 90%; --sidebar: 220 20% 97%;
+    --primary: 162 84% 28%; --primary-foreground: 0 0% 100%;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --background: 222 18% 9%; --foreground: 220 14% 94%;
+      --muted: 222 14% 16%; --muted-foreground: 220 9% 62%;
+      --border: 222 12% 20%; --sidebar: 222 20% 7%;
+      --primary: 162 70% 42%; --primary-foreground: 222 20% 8%;
+    }
+  }
+  * { @apply border-border; }
+  body { @apply bg-background text-foreground antialiased; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-primary; }
+}

@@ -1,0 +1,180 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "client" // query compiler + driver adapter (no Rust engine)
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  AGENT
+  ADMIN
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum DocumentStatus {
+  PENDING
+  PROCESSING
+  READY
+  FAILED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum OrderStatus {
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model User {
+  id            String          @id @default(uuid())
+  email         String          @unique
+  name          String?
+  image         String?
+  /// scrypt hash ("salt:hash"); null for accounts that cannot sign in (e.g. the knowledge-base owner)
+  passwordHash  String?
+  /// bump to invalidate every existing session ("sign out everywhere")
+  tokenVersion  Int             @default(0)
+  role          UserRole        @default(USER)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  conversations Conversation[]
+  documents     Document[]
+  tickets       SupportTicket[]
+  orders        Order[]
+  evalRuns      EvalRun[]
+}
+
+model Conversation {
+  id        String          @id @default(uuid())
+  title     String          @default("New conversation")
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  tickets   SupportTicket[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([userId, updatedAt])
+  @@index([updatedAt])
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           MessageRole
+  content        String
+  /// Assistant messages: { sources: Source[] }
+  metadata       Json?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+  @@index([role, createdAt])
+}
+
+model Document {
+  id        String          @id @default(uuid())
+  userId    String
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  source    String?
+  mimeType  String?
+  status    DocumentStatus  @default(PENDING)
+  chunks    DocumentChunk[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([userId])
+}
+
+model DocumentChunk {
+  id         String   @id @default(uuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  index      Int
+  content    String
+  tokenCount Int?
+  metadata   Json?
+  /// pgvector column; read/written with raw SQL (see lib/rag)
+  embedding  Unsupported("vector(1536)")?
+  createdAt  DateTime @default(now())
+
+  @@unique([documentId, index])
+}
+
+model SupportTicket {
+  id             String         @id @default(uuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversationId String?
+  conversation   Conversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  subject        String
+  description    String
+  status         TicketStatus   @default(OPEN)
+  priority       TicketPriority @default(MEDIUM)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([userId, status])
+  @@index([status, createdAt])
+}
+
+model Order {
+  id                String      @id @default(uuid())
+  orderNumber       String      @unique
+  userId            String
+  user              User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status            OrderStatus @default(PROCESSING)
+  totalCents        Int
+  currency          String      @default("USD")
+  /// [{ name, quantity, priceCents }]
+  items             Json
+  carrier           String?
+  trackingNumber    String?
+  estimatedDelivery DateTime?
+  shippedAt         DateTime?
+  deliveredAt       DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([userId, createdAt])
+}
+
+/// One execution of the AI evaluation suite (admin → Evals).
+model EvalRun {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passed     Int
+  total      Int
+  durationMs Int
+  /// EvalResult[] (see lib/evals/run.ts)
+  results    Json
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}

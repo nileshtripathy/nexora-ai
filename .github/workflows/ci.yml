@@ -1,0 +1,31 @@
+name: CI
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env: { POSTGRES_USER: supportai, POSTGRES_PASSWORD: supportai, POSTGRES_DB: supportai }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U supportai" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://supportai:supportai@localhost:5432/supportai
+      TEST_DATABASE_URL: postgresql://supportai:supportai@localhost:5432/supportai_test
+      AUTH_SECRET: ci-only-secret-ci-only-secret-ci-only-secret
+      AI_PROVIDER: mock
+      ALLOW_MOCK_PROVIDER: "1"
+      RAG_MIN_SIMILARITY: "0.1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx prisma migrate deploy
+      - run: npm run db:seed
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e

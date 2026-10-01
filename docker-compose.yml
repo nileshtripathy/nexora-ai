@@ -1,0 +1,36 @@
+# `docker compose up -d db`            -> just Postgres (local development)
+# `docker compose --profile app up`    -> db + migrations + the production app image
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: supportai
+      POSTGRES_PASSWORD: supportai
+      POSTGRES_DB: supportai
+    ports: ["5433:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supportai"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    profiles: [app]
+    build: { context: ., target: build }
+    command: npx prisma migrate deploy
+    environment:
+      DATABASE_URL: postgresql://supportai:supportai@db:5432/supportai
+    depends_on: { db: { condition: service_healthy } }
+
+  app:
+    profiles: [app]
+    build: .
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://supportai:supportai@db:5432/supportai
+    ports: ["3000:3000"]
+    depends_on: { migrate: { condition: service_completed_successfully } }
+
+volumes:
+  pgdata:
