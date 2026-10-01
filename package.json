@@ -12,13 +12,13 @@
     "db:push": "prisma db push",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "db:seed": "tsx --env-file=.env scripts/seed.ts",
+    "db:seed": "node --env-file-if-exists=.env --import tsx scripts/seed.ts",
     "db:migrate:deploy": "prisma migrate deploy",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm test",
-    "admin:promote": "tsx --env-file=.env scripts/promote-admin.ts"
+    "admin:promote": "node --env-file-if-exists=.env --import tsx scripts/promote-admin.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^2.0.0",
