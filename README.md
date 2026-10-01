@@ -1,4 +1,4 @@
-# NEXORAAI
+# NEXORA-AI
 
 An AI customer-support agent that answers from a company knowledge base (RAG), looks up real customer data through tool calling, escalates to human agents by creating tickets, and ships with the tooling to **inspect, evaluate and operate** it: an admin dashboard, per-conversation tracing, and a regression eval suite.
 
@@ -117,7 +117,7 @@ Key rules the design enforces:
 Requirements: Node 22+, Docker (for Postgres with pgvector).
 
 ```bash
-git clone <repo> && cd supportai
+git clone <repo> && cd nexora-ai
 docker compose up -d db                  # Postgres 16 + pgvector
 cp .env.example .env                     # then set AUTH_SECRET (openssl rand -base64 32)
 npm install
