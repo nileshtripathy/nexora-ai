@@ -1,4 +1,4 @@
-# SupportAI
+# NEXORAAI
 
 An AI customer-support agent that answers from a company knowledge base (RAG), looks up real customer data through tool calling, escalates to human agents by creating tickets, and ships with the tooling to **inspect, evaluate and operate** it: an admin dashboard, per-conversation tracing, and a regression eval suite.
 
