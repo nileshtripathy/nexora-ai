@@ -27,6 +27,7 @@ test("customer chats with the agent (RAG, tools, memory) and staff inspects it i
   await page.goto("/admin");
   await expect(page).not.toHaveURL(/\/admin/);
   await expect(heading).toBeVisible();
+  const customerConversationId = new URL(page.url()).pathname.split("/").at(-1);
 
   // ── RAG: grounded answer with cited, expandable sources ─────────
   await message.fill("How long do refunds take after I return an item?");
@@ -80,7 +81,7 @@ test("customer chats with the agent (RAG, tools, memory) and staff inspects it i
   await expect(page.getByText("getOrderStatus").first()).toBeVisible();
 
   await page.getByRole("link", { name: "Conversations" }).click();
-  await page.getByRole("link", { name: /How long do refunds take/ }).click();
+  await page.locator(`a[href="/admin/conversations/${customerConversationId}"]`).click();
   await expect(page.getByText("Retrieved context").first()).toBeVisible();
   await expect(page.getByText("Tool calls").first()).toBeVisible();
   await expect(page.getByText("[1] Refund Policy").first()).toBeVisible();

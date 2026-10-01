@@ -1,7 +1,7 @@
 import { defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
-const TEST_DB = process.env.TEST_DATABASE_URL ?? "postgresql://supportai:supportai@localhost:5432/supportai_test";
+const TEST_DB = process.env.TEST_DATABASE_URL ?? "postgresql://supportai:supportai@127.0.0.1:5433/supportai_test";
 
 export default defineConfig({
   resolve: { alias: { "@": fileURLToPath(new URL("./", import.meta.url)) } },

@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import pg from "pg";
 
-const DEFAULT = "postgresql://supportai:supportai@localhost:5432/supportai_test";
+const DEFAULT = "postgresql://supportai:supportai@127.0.0.1:5433/supportai_test";
 
 /** Creates (if needed) and migrates a throwaway `*_test` database by replaying prisma/migrations/*.sql. Never touches your dev DB. */
 export default async function setup() {
